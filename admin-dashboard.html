@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard | Campus Lost & Found</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f1f5f9;
+    margin: 0;
+    color: #1e293b;
+}
+
+header {
+    background: #1e293b;
+    color: white;
+    padding: 18px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h2 { margin: 0; }
+
+main { padding: 25px; }
+
+.welcome, .section {
+    background: white;
+    padding: 22px;
+    border-radius: 10px;
+    margin-bottom: 22px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.stat {
+    background: white;
+    padding: 22px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 2px 8px #00000010;
+}
+
+.stat strong {
+    display: block;
+    font-size: 28px;
+    color: #1d4ed8;
+    margin-bottom: 8px;
+}
+
+.stat span { color: #64748b; }
+
+button {
+    border: none;
+    padding: 9px 13px;
+    border-radius: 5px;
+    cursor: pointer;
+    color: white;
+}
+
+.logout { background: #dc2626; }
+.resolve { background: #16a34a; }
+.approve { background: #2563eb; }
+
+.table-wrap { overflow-x: auto; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 650px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+th { background: #f8fafc; }
+
+#message { color: #dc2626; }
+
+@media(max-width:600px) {
+    main { padding: 12px; }
+    header { padding: 15px; }
+    header h2 { font-size: 18px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h2>🔐 Admin Dashboard</h2>
+    <button class="logout" id="logoutBtn">Logout</button>
+</header>
+
+<main>
+
+    <div class="welcome">
+        <h2>Welcome, Admin!</h2>
+        <p>You are logged in as an authorized Admin.</p>
+        <p id="adminEmail"></p>
+    </div>
+
+    <h2>Dashboard Overview</h2>
+
+    <div class="stats">
+        <div class="stat">
+            <strong id="totalReports">0</strong>
+            <span>Total Reports</span>
+        </div>
+
+        <div class="stat">
+            <strong id="lostItems">0</strong>
+            <span>Lost Items</span>
+        </div>
+
+        <div class="stat">
+            <strong id="foundItems">0</strong>
+            <span>Found Items</span>
+        </div>
+
+        <div class="stat">
+            <strong id="pendingClaims">0</strong>
+            <span>Pending Claims</span>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Manage Student Reports</h2>
+        <p id="reportMessage">Loading reports...</p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Type</th>
+                        <th>Student</th>
+                        <th>Email</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="reportsTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Manage Claims</h2>
+        <p id="claimMessage">Loading claims...</p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Claimant</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="claimsTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <p id="message"></p>
+
+</main>
+
+<script type="module">
+
+import { auth, db } from "./firebase.js";
+
+import {
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+import {
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    updateDoc
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const adminEmail = document.getElementById("adminEmail");
+const message = document.getElementById("message");
+
+let loading = false;
+
+function esc(value) {
+    return String(value ?? "").replace(/[&<>"']/g, ch => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+    })[ch]);
+}
+
+async function loadDashboard() {
+
+    const reportMessage = document.getElementById("reportMessage");
+    const claimMessage = document.getElementById("claimMessage");
+
+    try {
+        const reportSnapshot =
+            await getDocs(collection(db, "reports"));
+
+        const claimSnapshot =
+            await getDocs(collection(db, "claims"));
+
+        const reports = reportSnapshot.docs.map(d => ({
+            id: d.id,
+            ...d.data()
+        }));
+
+        const claims = claimSnapshot.docs.map(d => ({
+            id: d.id,
+            ...d.data()
+        }));
+
+        document.getElementById("totalReports").textContent =
+            reports.length;
+
+        document.getElementById("lostItems").textContent =
+            reports.filter(x => x.type === "Lost").length;
+
+        document.getElementById("foundItems").textContent =
+            reports.filter(x => x.type === "Found").length;
+
+        document.getElementById("pendingClaims").textContent =
+            claims.filter(x => x.status === "Pending").length;
+
+        const reportsTable =
+            document.getElementById("reportsTable");
+
+        reportsTable.innerHTML = "";
+
+        for (const item of reports) {
+
+            const privateRef =
+                doc(db, "reportPrivate", item.id);
+
+            const privateDoc = await getDoc(privateRef);
+
+            const privateData = privateDoc.exists()
+                ? privateDoc.data()
+                : {};
+
+            reportsTable.innerHTML += `
+                <tr>
+                    <td>${esc(item.name)}</td>
+                    <td>${esc(item.type)}</td>
+                    <td>${esc(privateData.reporter || "Not available")}</td>
+                    <td>${esc(privateData.email || "Not available")}</td>
+                    <td>${esc(item.location)}</td>
+                    <td>${esc(item.status)}</td>
+                    <td>
+                        ${item.status !== "Resolved"
+                        ? `<button class="resolve"
+                           data-report-id="${esc(item.id)}">
+                           Resolve</button>`
+                        : "Completed"}
+                    </td>
+                </tr>
+            `;
+        }
+
+        reportMessage.textContent = reports.length
+            ? "Reports loaded successfully."
+            : "No reports found.";
+
+        const claimsTable =
+            document.getElementById("claimsTable");
+
+        claimsTable.innerHTML = "";
+
+        if (claims.length === 0) {
+            claimsTable.innerHTML =
+                '<tr><td colspan="5">No claims found.</td></tr>';
+        }
+
+        claims.forEach(claim => {
+
+            claimsTable.innerHTML += `
+                <tr>
+                    <td>${esc(claim.itemName)}</td>
+                    <td>${esc(claim.claimant)}</td>
+                    <td>${esc(claim.reason)}</td>
+                    <td>${esc(claim.status)}</td>
+                    <td>
+                        ${claim.status === "Pending"
+                        ? `<button class="approve"
+                           data-claim-id="${esc(claim.id)}">
+                           Approve</button>`
+                        : "Processed"}
+                    </td>
+                </tr>
+            `;
+        });
+
+        claimMessage.textContent =
+            claims.length ? "Claims loaded successfully." : "No claims found.";
+
+    } catch (error) {
+        console.error(error);
+        message.textContent =
+            "Dashboard error: " + error.message;
+    }
+}
+
+document.getElementById("reportsTable")
+.addEventListener("click", async (event) => {
+
+    const button = event.target.closest("[data-report-id]");
+    if (!button) return;
+
+    try {
+        await updateDoc(
+            doc(db, "reports", button.dataset.reportId),
+            { status: "Resolved" }
+        );
+
+        await loadDashboard();
+
+    } catch (error) {
+        alert("Error: " + error.message);
+    }
+});
+
+document.getElementById("claimsTable")
+.addEventListener("click", async (event) => {
+
+    const button = event.target.closest("[data-claim-id]");
+    if (!button) return;
+
+    try {
+        const claimId = button.dataset.claimId;
+
+        const claimRef = doc(db, "claims", claimId);
+        const claimDoc = await getDoc(claimRef);
+
+        if (!claimDoc.exists()) return;
+
+        const claim = claimDoc.data();
+
+        await updateDoc(claimRef, {
+            status: "Approved"
+        });
+
+        if (claim.itemId) {
+            await updateDoc(
+                doc(db, "reports", claim.itemId),
+                { status: "Resolved" }
+            );
+        }
+
+        await loadDashboard();
+
+    } catch (error) {
+        alert("Error: " + error.message);
+    }
+});
+
+onAuthStateChanged(auth, async (user) => {
+
+    if (loading) return;
+    loading = true;
+
+    if (!user) {
+        window.location.href = "admin-login.html";
+        return;
+    }
+
+    try {
+        const adminRef = doc(db, "admins", user.uid);
+        const adminDoc = await getDoc(adminRef);
+
+        if (adminDoc.exists() &&
+            adminDoc.data().role === "admin") {
+
+            adminEmail.textContent =
+                "Admin Email: " + user.email;
+
+            await loadDashboard();
+
+        } else {
+            await signOut(auth);
+            window.location.href = "admin-login.html";
+        }
+
+    } catch (error) {
+        alert("Admin verification failed: " + error.message);
+        await signOut(auth);
+        window.location.href = "admin-login.html";
+    }
+});
+
+document.getElementById("logoutBtn")
+.addEventListener("click", async () => {
+
+    await signOut(auth);
+    window.location.href = "admin-login.html";
+
+});
+
+</script>
+
+</body>
+</html>

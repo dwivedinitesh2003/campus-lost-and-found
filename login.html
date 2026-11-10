@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f5fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            width: 320px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px #ccc;
+        }
+
+        h2 {
+            text-align: center;
+            color: #234;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            box-sizing: border-box;
+        }
+
+        input {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            background: #2457d6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        p {
+            text-align: center;
+        }
+
+        a {
+            color: #2457d6;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>Student Login</h2>
+
+    <form id="loginForm">
+
+        <input type="email" id="email"
+        placeholder="College Email" required>
+
+        <input type="password" id="password"
+        placeholder="Password" required>
+
+        <button type="submit">Login</button>
+
+    </form>
+
+    <p id="message"></p>
+
+    <p>New Student?
+        <a href="register.html">Register Here</a>
+    </p>
+
+</div>
+
+<script type="module">
+
+import { auth } from "./firebase.js";
+
+import {
+    signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+const form = document.getElementById("loginForm");
+const message = document.getElementById("message");
+
+form.addEventListener("submit", async (e) => {
+
+    e.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    try {
+
+        await signInWithEmailAndPassword(auth, email, password);
+
+        message.textContent = "Login Successful!";
+
+        window.location.href = "dashboard.html";
+
+    } catch (error) {
+
+        message.textContent = error.message;
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f5fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            width: 320px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px #ccc;
+        }
+
+        h2 {
+            text-align: center;
+            color: #234;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 12px;
+            box-sizing: border-box;
+        }
+
+        input {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            background: #2457d6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Student Registration</h2>
+
+    <form id="registerForm">
+
+        <input type="text" id="name"
+        placeholder="Student Name" required>
+
+        <input type="email" id="email"
+        placeholder="College Email" required>
+
+        <input type="password" id="password"
+        placeholder="Password (minimum 6 characters)" required>
+
+        <input type="password" id="confirmPassword"
+        placeholder="Confirm Password" required>
+
+        <button type="submit">Register</button>
+
+    </form>
+
+    <p id="message"></p>
+</div>
+<script type="module">
+import { auth } from "./firebase.js";
+
+import {
+    createUserWithEmailAndPassword,
+    updateProfile
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+const form = document.getElementById("registerForm");
+const message = document.getElementById("message");
+
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+
+    if (password !== confirmPassword) {
+        message.textContent = "Passwords do not match!";
+        return;
+    }
+
+    if (password.length < 6) {
+        message.textContent = "Password must be at least 6 characters!";
+        return;
+    }
+
+    try {
+        const result = await createUserWithEmailAndPassword(
+            auth, email, password
+        );
+
+        await updateProfile(result.user, {
+            displayName: name
+        });
+
+        message.textContent = "Registration Successful!";
+
+        form.reset();
+
+    } catch (error) {
+        message.textContent = error.message;
+    }
+});
+</script>
+</body>
+</html>

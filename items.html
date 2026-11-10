@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Browse Items | Campus Lost & Found</title><link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="navbar"><a class="brand" href="index.html">🔎 Campus Lost & Found</a><nav><a href="index.html">Home</a><a href="report.html">Report Item</a><a class="active" href="items.html">Browse Items</a><a href="dashboard.html">Dashboard</a><a href="admin-login.html">Admin</a></nav></header>
+<main class="container">
+  <div class="page-head"><div><span class="eyebrow">Search & Filter</span><h1>Browse reported items</h1><p>Search the campus reports and submit a claim when you find a possible match.</p></div></div>
+  <section class="filter-card">
+    <input id="searchInput" placeholder="Search by item, description or location...">
+    <select id="typeFilter"><option value="">All Types</option><option>Lost</option><option>Found</option></select>
+    <select id="categoryFilter"><option value="">All Categories</option><option>Electronics</option><option>Documents</option><option>Accessories</option><option>Books</option><option>Clothing</option><option>Keys</option><option>Other</option></select>
+    <select id="statusFilter"><option value="">All Status</option><option>Open</option><option>Claim Pending</option><option>Resolved</option></select>
+  </section>
+  <div id="itemsGrid" class="grid three"></div>
+</main>
+<footer>Campus Lost & Found • MCA 3rd Semester (2026) Minor Project</footer>
+<!--<script src="assets/app.js"></script><script>setupItemsPage();</script>-->
+<script type="module">
+import { auth, db } from "./firebase.js";
+
+import {
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+import {
+    collection,
+    getDocs,
+    addDoc
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const itemsGrid = document.getElementById("itemsGrid");
+
+const searchInput = document.getElementById("searchInput");
+const typeFilter = document.getElementById("typeFilter");
+const categoryFilter = document.getElementById("categoryFilter");
+const statusFilter = document.getElementById("statusFilter");
+
+let allItems = [];
+let currentUser = null;
+
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+    })[char]);
+}
+
+async function loadItems() {
+    itemsGrid.innerHTML = "<p>Loading items...</p>";
+
+    try {
+        const snapshot = await getDocs(collection(db, "reports"));
+
+        allItems = snapshot.docs.map(document => ({
+            id: document.id,
+            ...document.data()
+        }));
+
+        displayItems();
+
+    } catch (error) {
+        console.error(error);
+        itemsGrid.innerHTML =
+            "<p>Error loading items: " + escapeHTML(error.message) + "</p>";
+    }
+}
+
+function displayItems() {
+
+    const search = searchInput.value.toLowerCase();
+    const type = typeFilter.value;
+    const category = categoryFilter.value;
+    const status = statusFilter.value;
+
+    const filteredItems = allItems.filter(item =>
+        (!type || item.type === type) &&
+        (!category || item.category === category) &&
+        (!status || item.status === status) &&
+        (!search || [
+            item.name,
+            item.description,
+            item.location,
+            item.category
+        ].join(" ").toLowerCase().includes(search))
+    );
+
+    if (filteredItems.length === 0) {
+        itemsGrid.innerHTML =
+            '<div class="empty">No matching reports found.</div>';
+        return;
+    }
+
+    itemsGrid.innerHTML = filteredItems.map(item => `
+        <article class="item-card">
+
+            <span class="pill">
+                ${escapeHTML(item.type)}
+            </span>
+
+            <span class="pill">
+                ${escapeHTML(item.status || "Open")}
+            </span>
+
+            <h3>${escapeHTML(item.name)}</h3>
+
+            <div class="item-meta">
+                📍 ${escapeHTML(item.location)}
+                • 📅 ${escapeHTML(item.date)}
+            </div>
+
+            <p><b>Category:</b>
+                ${escapeHTML(item.category)}
+            </p>
+
+            <p>${escapeHTML(item.description)}</p>
+
+            <p><b>Identification:</b>
+                ${escapeHTML(item.identifier || "Not provided")}
+            </p>
+
+            ${item.status !== "Resolved" ? `
+                <button class="btn primary claim-btn"
+                    data-item-id="${escapeHTML(item.id)}">
+                    Claim / Match This Item
+                </button>
+            ` : ""}
+
+        </article>
+    `).join("");
+}
+
+// Search and filters
+[searchInput, typeFilter, categoryFilter, statusFilter]
+    .forEach(element =>
+        element.addEventListener("input", displayItems)
+    );
+
+// Claim button
+itemsGrid.addEventListener("click", async event => {
+
+    const button = event.target.closest(".claim-btn");
+
+    if (!button) return;
+
+    if (!currentUser) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    const itemId = button.dataset.itemId;
+    const item = allItems.find(x => x.id === itemId);
+
+    if (!item) return;
+
+    const reason = prompt(
+        "Why do you believe this is your item? Include identifying details:"
+    );
+
+    if (!reason || !reason.trim()) return;
+
+    button.disabled = true;
+
+    try {
+
+        await addDoc(collection(db, "claims"), {
+            itemId: item.id,
+            itemName: item.name,
+            claimant: currentUser.displayName || currentUser.email,
+            email: currentUser.email,
+            claimantUid: currentUser.uid,
+            reason: reason.trim(),
+            status: "Pending",
+            createdAt: new Date().toISOString()
+        });
+
+        alert("Claim submitted successfully!");
+
+        button.textContent = "Claim Submitted";
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert("Error submitting claim: " + error.message);
+
+        button.disabled = false;
+    }
+});
+
+// Check login and load Firebase reports
+onAuthStateChanged(auth, user => {
+    currentUser = user;
+    loadItems();
+});
+</script>
+</body>
+</html>
