@@ -57,9 +57,50 @@
 <footer>Campus Lost & Found • MCA 3rd Semester (2026) Minor Project</footer>
 <!--<script src="assets/app.js"></script>
 <script>renderHomeStats();</script>-->
-<script src="assets/app.js"></script>
+<!--<script src="assets/app.js"></script>
 <script>
   renderHomeStats();
+</script>-->
+
+<script type="module">
+import { db } from "./firebase.js";
+import {
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+async function renderHomeStats() {
+  const statsSection = document.getElementById("homeStats");
+
+  try {
+    const snapshot = await getDocs(collection(db, "reports"));
+
+    const reports = snapshot.docs.map(doc => doc.data());
+
+    const total = reports.length;
+    const lost = reports.filter(x => x.type === "Lost").length;
+    const found = reports.filter(x => x.type === "Found").length;
+    const resolved = reports.filter(x => x.status === "Resolved").length;
+
+    statsSection.innerHTML = [
+      ["Total Reports", total],
+      ["Lost Items", lost],
+      ["Found Items", found],
+      ["Resolved", resolved]
+    ].map(x =>
+      `<div class="stat">
+        <strong>${x[1]}</strong>
+        <span>${x[0]}</span>
+      </div>`
+    ).join("");
+
+  } catch (error) {
+    console.error("Error loading homepage statistics:", error);
+    statsSection.innerHTML = "<p>Unable to load statistics.</p>";
+  }
+}
+
+renderHomeStats();
 </script>
 
 <script type="module">
