@@ -14,3 +14,232 @@
     #logoutBtn:hover {
         background: #c62828;
     }
+
+
+
+
+    /* Simple Navbar Improvement */
+.navbar {
+    background: #ffffff;
+    border-bottom: 2px solid #e5eaf2;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.brand {
+    color: #1e3a8a;
+    font-size: 1.15rem;
+}
+
+.navbar nav a {
+    transition: color 0.2s ease;
+}
+
+.navbar nav a:hover {
+    color: #2563eb;
+}
+
+
+
+/* Simple Card Improvement */
+
+.card,
+.item-card,
+.form-card,
+.filter-card,
+.stat {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+}
+
+.card:hover,
+.item-card:hover,
+.stat:hover {
+    border-color: #bfdbfe;
+    box-shadow: 0 5px 14px rgba(31, 58, 138, 0.08);
+}
+
+
+
+
+/* Simple Button Improvement */
+
+.btn,
+.small-btn,
+.claim-btn {
+    transition: background 0.2s ease;
+}
+
+.primary:hover,
+.small-btn:hover,
+.claim-btn:hover {
+    background: #1e40af;
+}
+
+.secondary:hover {
+    background: #dbe4ff;
+}
+
+.danger:hover {
+    background: #b91c1c;
+}
+
+.btn:active,
+.small-btn:active {
+    transform: scale(0.98);
+}
+
+
+
+
+/* Simple Form Improvement */
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: #3155c8;
+    box-shadow: 0 0 0 3px rgba(49, 85, 200, 0.10);
+}
+
+input,
+select,
+textarea {
+    transition: border-color 0.2s ease;
+}
+
+label {
+    color: #263653;
+}
+
+
+
+
+
+/* Page Heading Improvement */
+
+.page-head h1 {
+    color: #1e3a8a;
+    font-weight: 700;
+}
+
+.page-head p {
+    color: #64748b;
+}
+
+.hero h1 {
+    color: #1e3a8a;
+    font-weight: 800;
+}
+
+.hero p {
+    color: #64748b;
+}
+
+
+/* Simple Table Improvement */
+
+th {
+    color: #1e3a8a;
+    font-weight: 700;
+    padding: 15px;
+}
+
+td {
+    color: #334155;
+    padding: 14px 15px;
+}
+
+tr:hover td {
+    background: #f8faff;
+}
+
+.table-wrap {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+}
+
+
+
+/* Section Heading Improvement */
+
+.section h2 {
+    color: #1e3a8a;
+    font-size: 1.4rem;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e7eaf1;
+}
+
+.section {
+    margin-top: 35px;
+}
+
+/* Footer Improvement */
+
+footer {
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
+    padding: 25px 15px;
+    margin-top: 40px;
+}
+
+/* Status Badge Improvement */
+
+.pill {
+    padding: 5px 11px;
+    font-size: 0.75rem;
+    border-radius: 20px;
+    font-weight: 700;
+}
+
+.pill.found {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.pill.resolved {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+/* Item Card Text Improvement */
+
+.item-card h3 {
+    color: #1e3a8a;
+    font-size: 1.15rem;
+    margin-bottom: 8px;
+}
+
+.item-card p {
+    line-height: 1.5;
+}
+
+.item-meta {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+/* Mobile Navbar Improvement */
+
+@media (max-width: 800px) {
+    .navbar nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 15px;
+    }
+
+    .navbar nav a {
+        font-size: 0.88rem;
+        padding: 4px 0;
+    }
+}
+
+@media (max-width: 520px) {
+    .navbar {
+        padding: 12px 5%;
+    }
+
+    .brand {
+        font-size: 1rem;
+    }
+}
