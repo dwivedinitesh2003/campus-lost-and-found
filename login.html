@@ -20,13 +20,14 @@
             background: white;
             padding: 30px;
             width: 320px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px #ccc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
         }
 
         h2 {
             text-align: center;
-            color: #234;
+            color: #1e3a8a;
         }
 
         input, button {
@@ -41,12 +42,55 @@
             border-radius: 6px;
         }
 
+        input:focus {
+            outline: none;
+            border-color: #3155c8;
+            box-shadow: 0 0 0 3px rgba(49,85,200,0.10);
+        }
+
         button {
-            background: #2457d6;
+            background: #3155c8;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #1e40af;
+        }
+
+        .password-field {
+            position: relative;
+        }
+
+        .password-field input {
+            padding-right: 45px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 5px;
+            top: 15px;
+            width: 38px;
+            height: 40px;
+            padding: 0;
+            margin: 0;
+            background: transparent;
+            color: #475569;
+            font-size: 18px;
+        }
+
+        .toggle-password:hover {
+            background: transparent;
+        }
+
+        .forgot {
+            display: block;
+            text-align: right;
+            margin-top: 10px;
+            font-size: 14px;
         }
 
         p {
@@ -54,49 +98,18 @@
         }
 
         a {
-            color: #2457d6;
+            color: #3155c8;
+            text-decoration: none;
         }
 
+        a:hover {
+            text-decoration: underline;
+        }
 
-
-
-        /* Login Page Improvement */
-
-.container {
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-}
-
-h2 {
-    color: #1e3a8a;
-}
-
-input:focus {
-    outline: none;
-    border-color: #3155c8;
-    box-shadow: 0 0 0 3px rgba(49, 85, 200, 0.10);
-}
-
-button {
-    background: #3155c8;
-    font-weight: bold;
-    border-radius: 8px;
-    transition: background 0.2s ease;
-}
-
-button:hover {
-    background: #1e40af;
-}
-
-a {
-    color: #3155c8;
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
-}
+        #message {
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
     </style>
 </head>
 
@@ -111,8 +124,19 @@ a:hover {
         <input type="email" id="email"
         placeholder="Email" required>
 
-        <input type="password" id="password"
-        placeholder="Password" required>
+        <div class="password-field">
+            <input type="password" id="password"
+            placeholder="Password" required>
+
+            <button type="button" class="toggle-password"
+            id="togglePassword" aria-label="Show password">
+                👁
+            </button>
+        </div>
+
+        <a href="#" class="forgot" id="forgotPassword">
+            Forgot Password?
+        </a>
 
         <button type="submit">Login</button>
 
@@ -121,7 +145,7 @@ a:hover {
     <p id="message"></p>
 
     <p>New Student?
-        <a href="register.html">Register Here</a>
+        <a href="Register.html">Register Here</a>
     </p>
 
 </div>
@@ -131,18 +155,43 @@ a:hover {
 import { auth } from "./firebase.js";
 
 import {
-    signInWithEmailAndPassword
+    signInWithEmailAndPassword,
+    sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
 const form = document.getElementById("loginForm");
 const message = document.getElementById("message");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+
+// Show / Hide Password
+
+const togglePassword = document.getElementById("togglePassword");
+
+togglePassword.addEventListener("click", () => {
+
+    if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        togglePassword.textContent = "🙈";
+        togglePassword.setAttribute("aria-label", "Hide password");
+    } else {
+        passwordInput.type = "password";
+        togglePassword.textContent = "👁";
+        togglePassword.setAttribute("aria-label", "Show password");
+    }
+
+});
+
+// Login
 
 form.addEventListener("submit", async (e) => {
 
     e.preventDefault();
 
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    message.textContent = "Please wait...";
 
     try {
 
@@ -154,7 +203,42 @@ form.addEventListener("submit", async (e) => {
 
     } catch (error) {
 
-        message.textContent = error.message;
+        message.textContent = "Login failed: " + error.message;
+
+    }
+
+});
+
+// Forgot Password
+
+document.getElementById("forgotPassword")
+.addEventListener("click", async (e) => {
+
+    e.preventDefault();
+
+    const email = emailInput.value.trim();
+
+    if (!email) {
+        message.textContent = "Please enter your registered email first.";
+        emailInput.focus();
+        return;
+    }
+
+    message.textContent = "Sending password reset link...";
+
+    try {
+
+        await sendPasswordResetEmail(auth, email);
+
+        message.textContent =
+            "Password reset link sent! Please check your email inbox.";
+
+    } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+            "Unable to send reset link. Please check your email and try again.";
 
     }
 

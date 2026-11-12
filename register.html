@@ -20,13 +20,14 @@
             background: white;
             padding: 30px;
             width: 320px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px #ccc;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
         }
 
         h2 {
             text-align: center;
-            color: #234;
+            color: #1e3a8a;
         }
 
         input, button {
@@ -41,46 +42,54 @@
             border-radius: 6px;
         }
 
+        input:focus {
+            outline: none;
+            border-color: #3155c8;
+            box-shadow: 0 0 0 3px rgba(49, 85, 200, 0.10);
+        }
+
         button {
-            background: #2457d6;
+            background: #3155c8;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s ease;
+        }
+
+        button:hover {
+            background: #1e40af;
+        }
+
+        /* Password Show/Hide */
+
+        .password-field {
+            position: relative;
+        }
+
+        .password-field input {
+            padding-right: 45px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-30%);
+            width: auto;
+            margin: 0;
+            padding: 5px;
+            background: transparent;
+            color: #1e3a8a;
+            border: none;
+            font-size: 19px;
             cursor: pointer;
         }
 
-
-
-
-
-        /* Register Page Improvement */
-
-.container {
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-}
-
-h2 {
-    color: #1e3a8a;
-}
-
-input:focus {
-    outline: none;
-    border-color: #3155c8;
-    box-shadow: 0 0 0 3px rgba(49, 85, 200, 0.10);
-}
-
-button {
-    background: #3155c8;
-    font-weight: bold;
-    border-radius: 8px;
-    transition: background 0.2s ease;
-}
-
-button:hover {
-    background: #1e40af;
-}
+        .password-field .toggle-password:hover {
+            background: transparent;
+        }
     </style>
 </head>
 
@@ -97,11 +106,21 @@ button:hover {
         <input type="email" id="email"
         placeholder="Email" required>
 
-        <input type="password" id="password"
-        placeholder="Password (minimum 6 characters)" required>
+        <div class="password-field">
+            <input type="password" id="password"
+            placeholder="Password (minimum 6 characters)" required>
 
-        <input type="password" id="confirmPassword"
-        placeholder="Confirm Password" required>
+            <button type="button" class="toggle-password"
+            data-target="password">👁</button>
+        </div>
+
+        <div class="password-field">
+            <input type="password" id="confirmPassword"
+            placeholder="Confirm Password" required>
+
+            <button type="button" class="toggle-password"
+            data-target="confirmPassword">👁</button>
+        </div>
 
         <button type="submit">Register</button>
 
@@ -109,6 +128,7 @@ button:hover {
 
     <p id="message"></p>
 </div>
+
 <script type="module">
 import { auth } from "./firebase.js";
 
@@ -120,6 +140,26 @@ import {
 const form = document.getElementById("registerForm");
 const message = document.getElementById("message");
 
+// Show/Hide Password for both fields
+document.querySelectorAll(".toggle-password").forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        const targetId = button.dataset.target;
+        const passwordInput = document.getElementById(targetId);
+
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            button.textContent = "🙈";
+        } else {
+            passwordInput.type = "password";
+            button.textContent = "👁";
+        }
+
+    });
+
+});
+
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -129,11 +169,13 @@ form.addEventListener("submit", async (e) => {
     const confirmPassword = document.getElementById("confirmPassword").value;
 
     if (password !== confirmPassword) {
+        message.style.color = "red";
         message.textContent = "Passwords do not match!";
         return;
     }
 
     if (password.length < 6) {
+        message.style.color = "red";
         message.textContent = "Password must be at least 6 characters!";
         return;
     }
@@ -147,14 +189,21 @@ form.addEventListener("submit", async (e) => {
             displayName: name
         });
 
-        message.textContent = "Registration Successful!";
+        message.style.color = "green";
+        message.textContent = "Registration Successful! Redirecting to Homepage...";
 
         form.reset();
 
+        setTimeout(() => {
+            window.location.href = "index.html";
+        }, 2000);
+
     } catch (error) {
+        message.style.color = "red";
         message.textContent = error.message;
     }
 });
 </script>
+
 </body>
 </html>
