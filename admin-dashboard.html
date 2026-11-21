@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,7 +17,7 @@ body {
 }
 
 header {
-    background: #1e293b;
+    background: #1e3a8a;
     color: white;
     padding: 18px 25px;
     display: flex;
@@ -33,6 +34,8 @@ main { padding: 25px; }
     padding: 22px;
     border-radius: 10px;
     margin-bottom: 22px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 3px 10px rgba(0,0,0,.04);
 }
 
 .stats {
@@ -47,13 +50,13 @@ main { padding: 25px; }
     padding: 22px;
     border-radius: 10px;
     text-align: center;
-    box-shadow: 0 2px 8px #00000010;
+    border: 1px solid #e2e8f0;
 }
 
 .stat strong {
     display: block;
     font-size: 28px;
-    color: #1d4ed8;
+    color: #1e3a8a;
     margin-bottom: 8px;
 }
 
@@ -62,14 +65,25 @@ main { padding: 25px; }
 button {
     border: none;
     padding: 9px 13px;
-    border-radius: 5px;
+    border-radius: 7px;
     cursor: pointer;
     color: white;
+    font-weight: bold;
+    margin: 2px;
 }
 
 .logout { background: #dc2626; }
 .resolve { background: #16a34a; }
-.approve { background: #2563eb; }
+.verify { background: #2563eb; }
+.handover { background: #16a34a; }
+.view { background: #475569; }
+.cancel { background: #64748b; }
+.submit { background: #1e3a8a; }
+
+button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
 
 .table-wrap { overflow-x: auto; }
 
@@ -85,71 +99,105 @@ th, td {
     border-bottom: 1px solid #e2e8f0;
 }
 
-th { background: #f8fafc; }
+th {
+    background: #f8fafc;
+    color: #1e3a8a;
+}
+
+tr:hover td { background: #f8faff; }
 
 #message { color: #dc2626; }
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field label {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.field input, .field select {
+    width: 100%;
+    padding: 11px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.field input:focus, .field select:focus {
+    outline: 2px solid #bfdbfe;
+    border-color: #2563eb;
+}
+
+.full { grid-column: 1 / -1; }
+
+.form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,.65);
+    z-index: 1000;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.modal-content {
+    background: white;
+    max-width: 750px;
+    margin: 25px auto;
+    padding: 22px;
+    border-radius: 10px;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.detail {
+    padding: 10px;
+    background: #f8fafc;
+    border-radius: 6px;
+    overflow-wrap: anywhere;
+}
+
+.detail strong {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 5px;
+}
+
+.status {
+    font-weight: bold;
+}
 
 @media(max-width:600px) {
     main { padding: 12px; }
     header { padding: 15px; }
     header h2 { font-size: 18px; }
-}
-
-
-
-
-
-/* Admin Dashboard Improvements */
-
-header {
-    background: #1e3a8a;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
-}
-
-.welcome,
-.section {
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
-}
-
-.stat {
-    border: 1px solid #e2e8f0;
-    transition: 0.2s ease;
-}
-
-.stat:hover {
-    border-color: #bfdbfe;
-    box-shadow: 0 5px 14px rgba(31, 58, 138, 0.08);
-}
-
-.stat strong {
-    color: #1e3a8a;
-}
-
-th {
-    color: #1e3a8a;
-}
-
-tr:hover td {
-    background: #f8faff;
-}
-
-button {
-    border-radius: 7px;
-    font-weight: bold;
-    transition: 0.2s ease;
-}
-
-.logout:hover {
-    background: #b91c1c;
-}
-
-.resolve:hover {
-    background: #15803d;
-}
-
-.approve:hover {
-    background: #1e40af;
+    .form-grid, .details-grid {
+        grid-template-columns: 1fr;
+    }
+    .modal { padding: 8px; }
+    .modal-content { padding: 15px; }
 }
 </style>
 </head>
@@ -167,6 +215,7 @@ button {
         <h2>Welcome, Admin!</h2>
         <p>You are logged in as an authorized Admin.</p>
         <p id="adminEmail"></p>
+        <p id="adminName"></p>
     </div>
 
     <h2>Dashboard Overview</h2>
@@ -235,9 +284,175 @@ button {
         </div>
     </div>
 
+    <div class="section">
+        <h2>Claimant Verification Records</h2>
+        <p>Search and view previously saved verification records.</p>
+
+        <input
+            type="search"
+            id="recordSearch"
+            placeholder="Search by Claim ID, name, enrollment or item..."
+            style="width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:6px;margin-bottom:15px;"
+        >
+
+        <p id="recordMessage">Loading records...</p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Claim ID</th>
+                        <th>Item</th>
+                        <th>Student</th>
+                        <th>Enrollment</th>
+                        <th>Verification</th>
+                        <th>Handover</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="recordsTable"></tbody>
+            </table>
+        </div>
+    </div>
+
     <p id="message"></p>
 
 </main>
+
+<!-- Verification Form Modal -->
+<div class="modal" id="verificationModal">
+    <div class="modal-content">
+
+        <h2>Claimant Verification Form</h2>
+        <p id="formClaimInfo"></p>
+
+        <form id="verificationForm">
+
+            <div class="form-grid">
+
+                <div class="field">
+                    <label>Claim ID</label>
+                    <input id="formClaimId" readonly>
+                </div>
+
+                <div class="field">
+                    <label>Item Name</label>
+                    <input id="formItemName" readonly>
+                </div>
+
+                <div class="field">
+                    <label>Student Name *</label>
+                    <input id="formStudentName" required>
+                </div>
+
+                <div class="field">
+                    <label>Enrollment Number *</label>
+                    <input id="formEnrollment" required>
+                </div>
+
+                <div class="field">
+                    <label>College Name *</label>
+                    <select id="formCollege" required>
+                        <option value="">Select College</option>
+                        <option value="GGITS">GGITS</option>
+                        <option value="GGCT">GGCT</option>
+                        <option value="GGCE">GGCE</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Contact Number *</label>
+                    <input id="formContact" type="tel"
+                           maxlength="10" pattern="[0-9]{10}" required>
+                </div>
+
+                <div class="field full">
+                    <label>Email ID *</label>
+                    <input id="formEmail" type="email" required>
+                </div>
+
+                <div class="field">
+                    <label>Alternate Friend Name</label>
+                    <input type="text" id="formFriendName" required>
+                </div>
+
+                <div class="field">
+                    <label>Friend Enrollment Number</label>
+                    <input type="text" id="formFriendEnrollment" required>
+                </div>
+
+                <div class="field">
+                    <label>Friend Contact Number</label>
+                    <input id="formFriendContact"
+                           type="tel" maxlength="10"
+                           pattern="[0-9]{10}" required>
+                </div>
+
+                <div class="field">
+                    <label>College ID Photocopy *</label>
+                    <select id="formCollegeCopy" required>
+                        <option value="">Select</option>
+                        <option value="true">Received</option>
+                        <option value="false">Not Received</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Additional ID Proof *</label>
+                    <select id="formAdditionalProof" required>
+                        <option value="">Select</option>
+                        <option value="Received">Received</option>
+                        <option value="Not Received">Not Received</option>
+                        <option value="Not Required">Not Required</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Verification Status *</label>
+                    <select id="formVerificationStatus" required>
+                        <option value="">Select</option>
+                        <option value="Verified">Verified</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Admin Name</label>
+                    <input id="formAdminName" readonly>
+                </div>
+
+                <div class="field full">
+                    <label>Admin UID</label>
+                    <input id="formAdminUid" readonly>
+                </div>
+
+            </div>
+
+            <p id="formMessage"></p>
+
+            <div class="form-actions">
+                <button type="submit" class="submit" id="saveVerificationBtn">
+                    Save Verification & Approve Claim
+                </button>
+
+                <button type="button" class="cancel"
+                        id="closeFormBtn">Cancel</button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<!-- Record Details Modal -->
+<div class="modal" id="recordModal">
+    <div class="modal-content">
+        <h2>Verification Record Details</h2>
+        <div id="recordDetails" class="details-grid"></div>
+        <div class="form-actions">
+            <button class="cancel" id="closeRecordBtn">Close</button>
+        </div>
+    </div>
+</div>
 
 <script type="module">
 
@@ -253,12 +468,18 @@ import {
     doc,
     getDoc,
     getDocs,
-    updateDoc
+    updateDoc,
+    writeBatch,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const adminEmail = document.getElementById("adminEmail");
+const adminNameElement = document.getElementById("adminName");
 const message = document.getElementById("message");
 
+let currentAdmin = null;
+let currentClaims = [];
+let verificationRecords = [];
 let loading = false;
 
 function esc(value) {
@@ -271,24 +492,40 @@ function esc(value) {
     })[ch]);
 }
 
+function showDate(value) {
+    if (!value) return "Not available";
+
+    if (value.toDate) {
+        return value.toDate().toLocaleString();
+    }
+
+    return String(value);
+}
+
 async function loadDashboard() {
 
     const reportMessage = document.getElementById("reportMessage");
     const claimMessage = document.getElementById("claimMessage");
 
     try {
-        const reportSnapshot =
-            await getDocs(collection(db, "reports"));
-
-        const claimSnapshot =
-            await getDocs(collection(db, "claims"));
+        const [reportSnapshot, claimSnapshot, verificationSnapshot] =
+            await Promise.all([
+                getDocs(collection(db, "reports")),
+                getDocs(collection(db, "claims")),
+                getDocs(collection(db, "claimVerifications"))
+            ]);
 
         const reports = reportSnapshot.docs.map(d => ({
             id: d.id,
             ...d.data()
         }));
 
-        const claims = claimSnapshot.docs.map(d => ({
+        currentClaims = claimSnapshot.docs.map(d => ({
+            id: d.id,
+            ...d.data()
+        }));
+
+        verificationRecords = verificationSnapshot.docs.map(d => ({
             id: d.id,
             ...d.data()
         }));
@@ -303,19 +540,16 @@ async function loadDashboard() {
             reports.filter(x => x.type === "Found").length;
 
         document.getElementById("pendingClaims").textContent =
-            claims.filter(x => x.status === "Pending").length;
+            currentClaims.filter(x => x.status === "Pending").length;
 
-        const reportsTable =
-            document.getElementById("reportsTable");
-
+        const reportsTable = document.getElementById("reportsTable");
         reportsTable.innerHTML = "";
 
         for (const item of reports) {
 
-            const privateRef =
-                doc(db, "reportPrivate", item.id);
-
-            const privateDoc = await getDoc(privateRef);
+            const privateDoc = await getDoc(
+                doc(db, "reportPrivate", item.id)
+            );
 
             const privateData = privateDoc.exists()
                 ? privateDoc.data()
@@ -344,17 +578,21 @@ async function loadDashboard() {
             ? "Reports loaded successfully."
             : "No reports found.";
 
-        const claimsTable =
-            document.getElementById("claimsTable");
-
+        const claimsTable = document.getElementById("claimsTable");
         claimsTable.innerHTML = "";
 
-        if (claims.length === 0) {
+        if (currentClaims.length === 0) {
             claimsTable.innerHTML =
                 '<tr><td colspan="5">No claims found.</td></tr>';
         }
 
-        claims.forEach(claim => {
+        currentClaims.forEach(claim => {
+
+            const action = claim.status === "Pending"
+                ? `<button class="verify"
+                   data-claim-id="${esc(claim.id)}">
+                   Verify & Approve</button>`
+                : "Processed";
 
             claimsTable.innerHTML += `
                 <tr>
@@ -362,81 +600,383 @@ async function loadDashboard() {
                     <td>${esc(claim.claimant)}</td>
                     <td>${esc(claim.reason)}</td>
                     <td>${esc(claim.status)}</td>
-                    <td>
-                        ${claim.status === "Pending"
-                        ? `<button class="approve"
-                           data-claim-id="${esc(claim.id)}">
-                           Approve</button>`
-                        : "Processed"}
-                    </td>
+                    <td>${action}</td>
                 </tr>
             `;
         });
 
-        claimMessage.textContent =
-            claims.length ? "Claims loaded successfully." : "No claims found.";
+        claimMessage.textContent = currentClaims.length
+            ? "Claims loaded successfully."
+            : "No claims found.";
+
+        renderVerificationRecords();
 
     } catch (error) {
         console.error(error);
-        message.textContent =
-            "Dashboard error: " + error.message;
+        message.textContent = "Dashboard error: " + error.message;
     }
 }
 
-document.getElementById("reportsTable")
-.addEventListener("click", async (event) => {
+function renderVerificationRecords() {
 
-    const button = event.target.closest("[data-report-id]");
-    if (!button) return;
+    const table = document.getElementById("recordsTable");
+    const search = document.getElementById("recordSearch")
+        .value.trim().toLowerCase();
 
-    try {
-        await updateDoc(
-            doc(db, "reports", button.dataset.reportId),
-            { status: "Resolved" }
-        );
+    table.innerHTML = "";
 
-        await loadDashboard();
+    const filtered = verificationRecords.filter(record => {
 
-    } catch (error) {
-        alert("Error: " + error.message);
+        const searchable = [
+            record.claimId,
+            record.itemName,
+            record.studentName,
+            record.enrollmentNumber,
+            record.collegeName
+        ].join(" ").toLowerCase();
+
+        return searchable.includes(search);
+    });
+
+    if (!filtered.length) {
+        table.innerHTML =
+            '<tr><td colspan="7">No verification records found.</td></tr>';
     }
-});
+
+    filtered.forEach(record => {
+
+        table.innerHTML += `
+            <tr>
+                <td>${esc(record.claimId)}</td>
+                <td>${esc(record.itemName)}</td>
+                <td>${esc(record.studentName)}</td>
+                <td>${esc(record.enrollmentNumber)}</td>
+                <td>${esc(record.verificationStatus)}</td>
+                <td>${esc(record.handoverStatus)}</td>
+                <td>
+                    <button class="view"
+                        data-view-record="${esc(record.id)}">
+                        View
+                    </button>
+
+                    ${record.verificationStatus === "Verified"
+                    && record.handoverStatus !== "Handed Over"
+                    ? `<button class="handover"
+                       data-handover="${esc(record.id)}">
+                       Handed Over</button>`
+                    : ""}
+                </td>
+            </tr>
+        `;
+    });
+
+    document.getElementById("recordMessage").textContent =
+        filtered.length + " record(s) found.";
+}
+
+document.getElementById("recordSearch")
+.addEventListener("input", renderVerificationRecords);
+
+// Open verification form
+function openVerificationForm(claim) {
+
+    document.getElementById("verificationForm").reset();
+
+    document.getElementById("formClaimId").value = claim.id;
+    document.getElementById("formItemName").value = claim.itemName || "";
+    document.getElementById("formStudentName").value = claim.claimant || "";
+    document.getElementById("formEmail").value = claim.email || "";
+
+    document.getElementById("formAdminName").value = currentAdmin.name;
+    document.getElementById("formAdminUid").value = currentAdmin.uid;
+
+    document.getElementById("formClaimInfo").textContent =
+        "Complete the claimant details before approving this claim.";
+
+    document.getElementById("formMessage").textContent = "";
+
+    document.getElementById("verificationModal").style.display = "block";
+}
 
 document.getElementById("claimsTable")
-.addEventListener("click", async (event) => {
+.addEventListener("click", event => {
 
     const button = event.target.closest("[data-claim-id]");
     if (!button) return;
 
+    const claim = currentClaims.find(
+        x => x.id === button.dataset.claimId
+    );
+
+    if (claim) openVerificationForm(claim);
+});
+
+document.getElementById("closeFormBtn")
+.addEventListener("click", () => {
+    document.getElementById("verificationModal").style.display = "none";
+});
+
+// Save verification and approve claim together
+document.getElementById("verificationForm")
+.addEventListener("submit", async event => {
+
+    event.preventDefault();
+
+    const btn = document.getElementById("saveVerificationBtn");
+    const formMessage = document.getElementById("formMessage");
+
+    const claimId = document.getElementById("formClaimId").value;
+    const claim = currentClaims.find(x => x.id === claimId);
+
+    if (!claim || claim.status !== "Pending") {
+        formMessage.textContent = "This claim is not pending.";
+        return;
+    }
+
+    const verificationStatus =
+        document.getElementById("formVerificationStatus").value;
+
+    if (verificationStatus !== "Verified") {
+        formMessage.textContent =
+            "Claim cannot be approved because verification is not successful.";
+        return;
+    }
+
+    const collegeCopyValue =
+        document.getElementById("formCollegeCopy").value;
+
+
+        // Check required student and friend details
+const requiredFields = [
+    "formStudentName",
+    "formEnrollment",
+    "formCollege",
+    "formContact",
+    "formEmail",
+    "formFriendName",
+    "formFriendEnrollment",
+    "formFriendContact"
+];
+
+for (const fieldId of requiredFields) {
+    const value = document.getElementById(fieldId).value.trim();
+
+    if (!value) {
+        formMessage.textContent =
+            "Please fill all required student and friend details.";
+        return;
+    }
+}
+
+// College ID photocopy is compulsory
+if (collegeCopyValue !== "true") {
+    formMessage.textContent =
+        "College ID photocopy must be received before approval.";
+    return;
+}
+
+    const data = {
+        claimId: claimId,
+        itemId: claim.itemId || "",
+        itemName: claim.itemName || "",
+
+        studentName:
+            document.getElementById("formStudentName").value.trim(),
+
+        enrollmentNumber:
+            document.getElementById("formEnrollment").value.trim(),
+
+        collegeName:
+            document.getElementById("formCollege").value,
+
+        contactNumber:
+            document.getElementById("formContact").value.trim(),
+
+        email:
+            document.getElementById("formEmail").value.trim(),
+
+        alternateFriendName:
+            document.getElementById("formFriendName").value.trim(),
+
+        alternateFriendEnrollmentNumber:
+            document.getElementById("formFriendEnrollment").value.trim(),
+
+        alternateFriendContactNumber:
+            document.getElementById("formFriendContact").value.trim(),
+
+        collegeIdPhotocopyReceived:
+            collegeCopyValue === "true",
+
+        additionalIdProofStatus:
+            document.getElementById("formAdditionalProof").value,
+
+        verificationStatus: verificationStatus,
+
+        handoverStatus: "Pending",
+        handoverDate: null,
+
+        adminUid: currentAdmin.uid,
+        adminName: currentAdmin.name,
+
+        createdAt: serverTimestamp()
+    };
+
+    if (!data.itemId) {
+        formMessage.textContent = "Claim item ID is missing.";
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Saving...";
+
     try {
-        const claimId = button.dataset.claimId;
+
+        const batch = writeBatch(db);
+
+        const verificationRef =
+            doc(db, "claimVerifications", claimId);
 
         const claimRef = doc(db, "claims", claimId);
-        const claimDoc = await getDoc(claimRef);
 
-        if (!claimDoc.exists()) return;
+        batch.set(verificationRef, data, { merge: true });
 
-        const claim = claimDoc.data();
-
-        await updateDoc(claimRef, {
+        batch.update(claimRef, {
             status: "Approved"
         });
 
-        if (claim.itemId) {
-            await updateDoc(
-                doc(db, "reports", claim.itemId),
-                { status: "Resolved" }
-            );
-        }
+        await batch.commit();
+
+        alert("Verification saved and claim approved successfully!");
+
+        document.getElementById("verificationModal").style.display = "none";
 
         await loadDashboard();
 
     } catch (error) {
-        alert("Error: " + error.message);
+        console.error(error);
+        formMessage.textContent = "Error: " + error.message;
+    }
+
+    btn.disabled = false;
+    btn.textContent = "Save Verification & Approve Claim";
+});
+
+// View old verification record
+function viewRecord(record) {
+
+    const fields = [
+        ["Claim ID", record.claimId],
+        ["Item Name", record.itemName],
+        ["Student Name", record.studentName],
+        ["Enrollment Number", record.enrollmentNumber],
+        ["College", record.collegeName],
+        ["Contact Number", record.contactNumber],
+        ["Email", record.email],
+        ["Friend Name", record.alternateFriendName],
+        ["Friend Enrollment", record.alternateFriendEnrollmentNumber],
+        ["Friend Contact", record.alternateFriendContactNumber],
+        ["College ID Photocopy", record.collegeIdPhotocopyReceived ? "Received" : "Not Received"],
+        ["Additional ID Proof", record.additionalIdProofStatus],
+        ["Verification Status", record.verificationStatus],
+        ["Handover Status", record.handoverStatus],
+        ["Handover Date", showDate(record.handoverDate)],
+        ["Admin Name", record.adminName],
+        ["Admin UID", record.adminUid],
+        ["Record Created", showDate(record.createdAt)]
+    ];
+
+    document.getElementById("recordDetails").innerHTML =
+        fields.map(([label, value]) => `
+            <div class="detail">
+                <strong>${esc(label)}</strong>
+                ${esc(value)}
+            </div>
+        `).join("");
+
+    document.getElementById("recordModal").style.display = "block";
+}
+
+document.getElementById("recordsTable")
+.addEventListener("click", async event => {
+
+    const viewButton = event.target.closest("[data-view-record]");
+
+    if (viewButton) {
+        const record = verificationRecords.find(
+            x => x.id === viewButton.dataset.viewRecord
+        );
+
+        if (record) viewRecord(record);
+        return;
+    }
+
+    const handoverButton = event.target.closest("[data-handover]");
+
+    if (handoverButton) {
+
+        const recordId = handoverButton.dataset.handover;
+
+        const record = verificationRecords.find(
+            x => x.id === recordId
+        );
+
+        if (!record) return;
+
+        if (!confirm(
+            "Have you physically handed over this item to the claimant?"
+        )) return;
+
+        try {
+
+            const batch = writeBatch(db);
+
+            batch.update(
+                doc(db, "claimVerifications", recordId),
+                {
+                    handoverStatus: "Handed Over",
+                    handoverDate: serverTimestamp()
+                }
+            );
+
+            batch.update(
+                doc(db, "reports", record.itemId),
+                {
+                    status: "Resolved"
+                }
+            );
+
+            await batch.commit();
+
+            alert("Item handover recorded successfully!");
+
+            await loadDashboard();
+
+        } catch (error) {
+            alert("Handover error: " + error.message);
+            console.error(error);
+        }
     }
 });
 
-onAuthStateChanged(auth, async (user) => {
+document.getElementById("closeRecordBtn")
+.addEventListener("click", () => {
+    document.getElementById("recordModal").style.display = "none";
+});
+
+// Existing report Resolve action
+document.getElementById("reportsTable")
+.addEventListener("click", async event => {
+
+    const button = event.target.closest("[data-report-id]");
+    if (!button) return;
+
+    alert(
+        "Reports will be resolved through the Claimant Verification Handover process."
+    );
+});
+
+// Admin authentication
+onAuthStateChanged(auth, async user => {
 
     if (loading) return;
     loading = true;
@@ -447,29 +987,51 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     try {
+
         const adminRef = doc(db, "admins", user.uid);
         const adminDoc = await getDoc(adminRef);
 
-        if (adminDoc.exists() &&
-            adminDoc.data().role === "admin") {
+        if (
+            adminDoc.exists() &&
+            adminDoc.data().role === "admin"
+        ) {
 
-            adminEmail.textContent =
-                "Admin Email: " + user.email;
+            const adminData = adminDoc.data();
+
+            currentAdmin = {
+                uid: user.uid,
+                email: user.email,
+                name: adminData.name || ""
+            };
+
+            if (!currentAdmin.name) {
+                alert("Admin name is missing in Firestore admins document.");
+                await signOut(auth);
+                window.location.href = "admin-login.html";
+                return;
+            }
+
+            adminEmail.textContent = "Admin Email: " + user.email;
+            adminNameElement.textContent =
+                "Admin Name: " + currentAdmin.name;
 
             await loadDashboard();
 
         } else {
+
             await signOut(auth);
             window.location.href = "admin-login.html";
         }
 
     } catch (error) {
+
         alert("Admin verification failed: " + error.message);
         await signOut(auth);
         window.location.href = "admin-login.html";
     }
 });
 
+// Logout
 document.getElementById("logoutBtn")
 .addEventListener("click", async () => {
 
